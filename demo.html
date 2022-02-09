@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta charset="UTF-8">
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta http-equiv="content-language" content="en">
+
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
+  <!-- base can be used to keep asset paths relative to here -->
+  <base href="https://cdn.jsdelivr.net/npm/latex.js/dist/">
+
+  <script src="https://cdn.jsdelivr.net/npm/latex.js/dist/latex.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/mode/javascript/javascript.min.js" integrity="sha512-DJ/Flq7rxJDDhgkO49H/rmidX44jmxWot/ku3c+XXEF9XFal78KIpu7w6jEaQhK4jli1U3/yOH+Rp3cIIEYFPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/stex/stex.min.js" integrity="sha512-l+FnIuYCa5e8wQFlCV4yk2dQH74HjZJkYaiyY3udIQnAJ4w48RiPmbX1MSX70XGlyTWawj/CFgCrDTSRDA6tJw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <title>Theorem Search Demo</title>
+</head>
+
+<body>
+    <h3 id="latex" style=" height: 10rem; "></h3>
+    <br />
+    <p id="error_msg" style="color:red; height: 10px;"></p>
+<textarea id="editor" style="width:100%;min-height:20rem;">
+Let $ \R \setminus \Q $ denote the set of irrational numbers. 
+
+Let $ \{ \R, \tau \} $ denote the real number line with the usual (Euclidean) topology. 
+
+Then $ \R \setminus \Q $ forms a $ G_\delta $ set in $ \R $.
+</textarea>
+    <h4>Related Theorem:</h4>
+    <ul id="thms">
+        <li>Not yet.</li>
+    </ul>
+  <script>
+
+    let editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+        mode: "stex",
+        lineNumbers: true,
+        inMathMode: true
+    });
+
+    editor.on("change", (i, c) => {
+        console.log("changes")
+        renderLatex(editor.getValue())
+        getPredictTheorem(editor.getValue())
+    });
+
+    
+    var generator = new latexjs.HtmlGenerator({ hyphenate: false })
+    document.head.appendChild(generator.stylesAndScripts(""))
+    function renderLatex(text){
+        try{
+            generator.reset();
+            generator = latexjs.parse(text, { generator: generator })
+            // document.head.appendChild(generator.stylesAndScripts("https://cdn.jsdelivr.net/npm/latex.js@0.12.4/dist/"))
+            document.getElementById("latex").innerHTML = "";
+            document.getElementById("latex").appendChild(generator.domFragment())
+            document.getElementById("error_msg").innerText = "";
+        }catch(e){
+            document.getElementById("error_msg").innerText = e.message;
+        }
+    }
+
+    renderLatex(editor.getValue())
+    getPredictTheorem(editor.getValue())
+
+    function getPredictTheorem(text) {
+        fetch('https://'+ location.host +'/predict', {
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                raw: text
+            })
+        }).then(function(response) {
+            return response.json();
+        }).then(function(data) {
+            lis = data.thms.map(x=>`<li>` + x + `</li>`).join('')
+            document.getElementById("thms").innerHTML = lis;
+        });
+    }
+  </script>
+</body>
+
+</html>
